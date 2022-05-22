@@ -37,12 +37,12 @@ async function run() {
         })
 
         // GET SPECIFIC ID ORDER
-        /* app.get('/manageorder/:id', async(req, res) => {
+        app.get('/manageorder/:id', async(req, res) => {
             const id =req.params.id
             const query = {_id: ObjectId(id)}
             const result =await manageorderCollection.findOne(query)
             res.send(result)
-        }) */
+        })
 
 
         // GET SPECIFIC ID PRODUCT
