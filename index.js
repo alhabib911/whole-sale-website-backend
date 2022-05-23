@@ -36,6 +36,14 @@ async function run() {
             res.send(result)
         })
 
+        // GET ALL ORDER
+        app.get('/manageorder', async(req, res) =>{
+            const query = {}
+            const cursor = manageorderCollection.find(query)
+            const order = await cursor.toArray()
+            res.send(order)
+        })
+
         // GET SPECIFIC ID ORDER
         app.get('/manageorder/:id', async(req, res) => {
             const id =req.params.id
