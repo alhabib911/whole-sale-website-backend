@@ -23,8 +23,8 @@ function verifyJWT(req, res, next) {
     }
     const token = authHeader.split(' ')[1]
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if(err){
-            return res.status(403).send({message: 'Forbidden access'})
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
         }
         req.decoded = decoded
         next()
@@ -62,6 +62,24 @@ async function run() {
             res.send({ result, token })
         })
 
+        // MAKE AN ADMIN
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email
+            const filter = { email: email }
+            const updateDoc = {
+                $set: {role: 'admin'},
+            };
+            const result = await userCollection.updateOne(filter, updateDoc)
+            res.send( result )
+        })
+
+
+        // GET ALL USER
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray()
+            res.send(users)
+        })
+
 
         // All Order Quantity
         app.post('/manageorder', async (req, res) => {
@@ -75,13 +93,13 @@ async function run() {
             const email = req.query.email
             const authorization = req.headers.authorization
             const decodedEmail = req.decoded.email
-            if(email === decodedEmail){
+            if (email === decodedEmail) {
                 const query = { email: email }
                 const orders = await manageorderCollection.find(query).toArray()
-             return res.send(orders)
+                return res.send(orders)
             }
-            else{
-                return res.status(403).send({message: 'forbidden access'})
+            else {
+                return res.status(403).send({ message: 'forbidden access' })
             }
         })
 
