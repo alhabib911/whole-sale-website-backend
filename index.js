@@ -1,7 +1,8 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const express = require('express')
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
-require ('dotenv').config()
+require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000
 
@@ -16,65 +17,81 @@ console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run() {
-    try{
+    try {
         await client.connect()
         const productCollection = client.db('kelong').collection('products')
         const manageorderCollection = client.db('kelong').collection('manageorder')
+        const userCollection = client.db('kelong').collection('users')
 
         // GET ALL PRODUCTS
-        app.get('/product', async(req, res) =>{
+        app.get('/product', async (req, res) => {
             const query = {}
             const cursor = productCollection.find(query)
             const product = await cursor.toArray()
             res.send(product)
         })
 
+        // GET CREATE USER EMAIL
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const user = req.body
+            const filter = { email: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result =await userCollection.updateOne(filter, updateDoc, options)
+            const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' }) 
+            res.send({result, token})
+        })
+        
+
         // All Order Quantity
-        app.post('/manageorder', async(req, res) => {
-            const newOrder =req.body
-             const result =await manageorderCollection.insertOne(newOrder)
+        app.post('/manageorder', async (req, res) => {
+            const newOrder = req.body
+            const result = await manageorderCollection.insertOne(newOrder)
             res.send(result)
         })
 
         // GET ALL ORDER
-        app.get('/manageorder', async(req, res) =>{
+        app.get('/manageorder', async (req, res) => {
             const email = req.query.email
-            const query = {email: email}
+            const query = { email: email }
             const orders = await manageorderCollection.find(query).toArray()
             res.send(orders)
         })
 
         // GET SPECIFIC ID ORDER
-        app.get('/manageorder/:id', async(req, res) => {
-            const id =req.params.id
-            const query = {_id: ObjectId(id)}
-            const result =await manageorderCollection.findOne(query)
+        app.get('/manageorder/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await manageorderCollection.findOne(query)
             res.send(result)
-        }) 
+        })
 
 
         // GET SPECIFIC ID PRODUCT
-        app.get('/product/:id', async(req, res) => {
-            const id =req.params.id
-            const query = {_id: ObjectId(id)}
-            const result =await productCollection.findOne(query)
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollection.findOne(query)
             res.send(result)
-        }) 
+        })
 
     }
-    finally{
+    finally {
 
     }
 }
- 
+
 run().catch(console.dir)
 
 
 
 app.get('/', (req, res) => {
-  res.send('Hello From Kelong Group!')
+    res.send('Hello From Kelong Group!')
 })
 
 app.listen(port, () => {
-  console.log(`Kelong app listening on port ${port}`)
+    console.log(`Kelong app listening on port ${port}`)
 })
