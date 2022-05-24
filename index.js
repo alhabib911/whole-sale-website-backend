@@ -38,10 +38,10 @@ async function run() {
 
         // GET ALL ORDER
         app.get('/manageorder', async(req, res) =>{
-            const query = {}
-            const cursor = manageorderCollection.find(query)
-            const order = await cursor.toArray()
-            res.send(order)
+            const email = req.query.email
+            const query = {email: email}
+            const orders = await manageorderCollection.find(query).toArray()
+            res.send(orders)
         })
 
         // GET SPECIFIC ID ORDER
@@ -50,7 +50,7 @@ async function run() {
             const query = {_id: ObjectId(id)}
             const result =await manageorderCollection.findOne(query)
             res.send(result)
-        })
+        }) 
 
 
         // GET SPECIFIC ID PRODUCT
