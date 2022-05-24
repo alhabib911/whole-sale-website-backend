@@ -16,6 +16,23 @@ console.log(uri);
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+        return res.status(401).send({ message: 'UnAuthorozed access' })
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if(err){
+            return res.status(403).send({message: 'Forbidden access'})
+        }
+        req.decoded = decoded
+        next()
+    });
+}
+
+
+
 async function run() {
     try {
         await client.connect()
@@ -40,11 +57,11 @@ async function run() {
             const updateDoc = {
                 $set: user,
             };
-            const result =await userCollection.updateOne(filter, updateDoc, options)
-            const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' }) 
-            res.send({result, token})
+            const result = await userCollection.updateOne(filter, updateDoc, options)
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token })
         })
-        
+
 
         // All Order Quantity
         app.post('/manageorder', async (req, res) => {
@@ -54,11 +71,18 @@ async function run() {
         })
 
         // GET ALL ORDER
-        app.get('/manageorder', async (req, res) => {
+        app.get('/manageorder', verifyJWT, async (req, res) => {
             const email = req.query.email
-            const query = { email: email }
-            const orders = await manageorderCollection.find(query).toArray()
-            res.send(orders)
+            const authorization = req.headers.authorization
+            const decodedEmail = req.decoded.email
+            if(email === decodedEmail){
+                const query = { email: email }
+                const orders = await manageorderCollection.find(query).toArray()
+             return res.send(orders)
+            }
+            else{
+                return res.status(403).send({message: 'forbidden access'})
+            }
         })
 
         // GET SPECIFIC ID ORDER
