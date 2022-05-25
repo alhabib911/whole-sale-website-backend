@@ -41,11 +41,20 @@ async function run() {
         const userCollection = client.db('kelong').collection('users')
 
         // GET ALL PRODUCTS
-        app.get('/product', async (req, res) => {
+        app.get('/product', verifyJWT, async (req, res) => {
             const query = {}
             const cursor = productCollection.find(query)
             const product = await cursor.toArray()
             res.send(product)
+        })
+
+
+        // Add new Product
+        app.post('/product', async(req, res) => {
+            const newProduct =req.body
+            console.log('add', newProduct)
+            const result =await productCollection.insertOne(newProduct)
+            res.send(result)
         })
 
         // GET CREATE USER EMAIL
@@ -74,7 +83,7 @@ async function run() {
         })
 
         // ADMIN CHECK FOR REQUIRE ADMIN
-        app.get('/admin/:email', async (req, res) => {
+        app.get('/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
@@ -147,6 +156,14 @@ async function run() {
             })
             req.send({clientSecret: paymentIntent.client_secret})
         })
+
+        // Delete Product
+        app.delete('/product/:id', verifyJWT, async(req, res) => {
+            const id = req.params.id
+            const query = {_id: ObjectId(id)}
+            const result =await productCollection.deleteOne(query)
+            res.send(result)
+        } )
 
 
     }
