@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -40,11 +40,14 @@ async function run() {
         const productCollection = client.db('kelong').collection('products')
         const manageorderCollection = client.db('kelong').collection('manageorder')
         const userCollection = client.db('kelong').collection('users')
+        const userUpdateCollection = client.db('kelong').collection('update')
         const reviewCollection = client.db('kelong').collection('review')
 
-        // GET ALL PRODUCTS
-        app.get('/product', verifyJWT, async (req, res) => {
-            const query = {}
+
+        // Get Product
+        app.get('/product', async(req, res) =>{
+            const email =req.query.email
+            const query = {email: email}
             const cursor = productCollection.find(query)
             const product = await cursor.toArray()
             res.send(product)
@@ -59,6 +62,28 @@ async function run() {
             res.send(review)
         })
 
+
+
+   
+
+
+        // GET ALL Review
+        app.get('/review', verifyJWT, async (req, res) => {
+            const email = req.query.email
+            const authorization = req.headers.authorization
+            const decodedEmail = req.decoded.email
+            if (email === decodedEmail) {
+                const query = { email: email }
+                const reviews = await reviewCollection.find(query).toArray()
+                return res.send(reviews)
+            }
+            else {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+        })
+
+
+
         // Add new Review
         app.post('/review', async (req, res) => {
             const newReview = req.body
@@ -66,6 +91,16 @@ async function run() {
             const review = await reviewCollection.insertOne(newReview)
             res.send(review)
         })
+
+
+        // GET EMAIL USER REVIEW  
+        app.get('/review/:email', async (req, res) => {
+            const email = req.params.email;
+            const result = await reviewCollection.findOne({ email: email });
+            // const users = await userCollection.find().toArray()
+            res.send(result)
+        })
+
 
 
         // Add new Product
@@ -93,7 +128,7 @@ async function run() {
         // GET UPDATE INFO SEND FOR UI  
         app.get('/user/:email', async (req, res) => {
             const email = req.params.email;
-            const user = await userCollection.findOne({ email: email });
+            const user = await userCollection.findOne({ email: email })
             // const users = await userCollection.find().toArray()
             res.send(user)
         })
@@ -165,12 +200,15 @@ async function run() {
 
 
         // GET SPECIFIC ID PRODUCT
-        app.get('/product/:id', async (req, res) => {
-            const id = req.params.id
-            const query = { _id: ObjectId(id) }
-            const result = await productCollection.findOne(query)
+        app.get('/product/:id', async(req, res) => {
+            const id =req.params.id
+            const query = {_id: ObjectId(id)}
+            const result =await productCollection.findOne(query)
             res.send(result)
-        })
+        }) 
+
+
+         
 
         // PAYMENT GATEWAY INTEGRATION
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
@@ -185,13 +223,13 @@ async function run() {
             req.send({ clientSecret: paymentIntent.client_secret })
         })
 
-        // Delete Product
-        app.delete('/product/:id', verifyJWT, async (req, res) => {
+         // Delete Product
+         app.delete('/product/:id', async(req, res) => {
             const id = req.params.id
-            const query = { _id: ObjectId(id) }
-            const result = await productCollection.deleteOne(query)
+            const query = {_id: ObjectId(id)}
+            const result =await productCollection.deleteOne(query)
             res.send(result)
-        })
+        } )
 
 
     }
