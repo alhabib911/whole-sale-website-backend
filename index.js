@@ -51,13 +51,13 @@ async function run() {
         })
 
 
-        // // GET ALL REVIEW
-        // app.get('/review', async (req, res) => {
-        //     const query = {}
-        //     const cursor = reviewCollection.find(query)
-        //     const review = await cursor.toArray()
-        //     res.send(review)
-        // })
+        // GET ALL REVIEW
+        app.get('/review', async (req, res) => {
+            const query = {}
+            const cursor = reviewCollection.find(query)
+            const review = await cursor.toArray()
+            res.send(review)
+        })
 
         // Add new Review
         app.post('/review', async (req, res) => {
