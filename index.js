@@ -59,13 +59,13 @@ async function run() {
         //     res.send(review)
         // })
 
-        // // Add new Review
-        // app.post('/review', async (req, res) => {
-        //     const newReview = req.body
-        //     console.log('add', newReview)
-        //     const review = await reviewCollection.insertOne(newReview)
-        //     res.send(review)
-        // })
+        // Add new Review
+        app.post('/review', async (req, res) => {
+            const newReview = req.body
+            console.log('add', newReview)
+            const review = await reviewCollection.insertOne(newReview)
+            res.send(review)
+        })
 
 
         // Add new Product
