@@ -42,12 +42,12 @@ async function run() {
         const userCollection = client.db('kelong').collection('users')
         const userUpdateCollection = client.db('kelong').collection('update')
         const reviewCollection = client.db('kelong').collection('review')
-
+        const paymentCollection = client.db('kelong').collection('payments');
 
         // Get Product
-        app.get('/product', async(req, res) =>{
-            const email =req.query.email
-            const query = {email: email}
+        app.get('/product', async (req, res) => {
+            const email = req.query.email
+            const query = { email: email }
             const cursor = productCollection.find(query)
             const product = await cursor.toArray()
             res.send(product)
@@ -62,9 +62,6 @@ async function run() {
             res.send(review)
         })
 
-
-
-   
 
 
         // GET ALL Review
@@ -200,36 +197,55 @@ async function run() {
 
 
         // GET SPECIFIC ID PRODUCT
-        app.get('/product/:id', async(req, res) => {
-            const id =req.params.id
-            const query = {_id: ObjectId(id)}
-            const result =await productCollection.findOne(query)
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollection.findOne(query)
             res.send(result)
-        }) 
-
-
-         
-
-        // PAYMENT GATEWAY INTEGRATION
-        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
-            const order = req.body
-            const price = order.price
-            const amount = price * 100
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount,
-                currency: 'usd',
-                payment_method_types: ["card"]
-            })
-            req.send({ clientSecret: paymentIntent.client_secret })
         })
 
-         // Delete Product
-         app.delete('/product/:id', async(req, res) => {
+
+
+
+        // Delete Product
+        app.delete('/product/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: ObjectId(id)}
-            const result =await productCollection.deleteOne(query)
+            const query = { _id: ObjectId(id) }
+            const result = await productCollection.deleteOne(query)
             res.send(result)
-        } )
+        })
+
+        // Update Product
+        app.put('/product/:id', async(req, res) =>{
+            const id = req.params.id;
+            const updateProduct = req.body;
+            const filter = {_id: ObjectId(id)};
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    quantity: updateProduct.quantity
+                }
+            };
+            const result = await productCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+
+        })
+
+        // PAYMENT GATEWAY INTEGRATION
+        app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+            const service = req.body;
+            const price = service.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
+          });
+
+
+
 
 
     }
