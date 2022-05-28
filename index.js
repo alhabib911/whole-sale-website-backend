@@ -108,6 +108,24 @@ async function run() {
             res.send(result)
         })
 
+
+         // Update Product
+         app.put('/product/:id', async(req, res) =>{
+            const id = req.params.id;
+            const updateProduct = req.body;
+            console.log(updateProduct);
+            const filter = {_id: ObjectId(id)};
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: 
+                    updateProduct,                  
+                
+            };
+            const result = await productCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+
+        })
+
         // GET CREATE USER EMAIL
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
@@ -204,9 +222,6 @@ async function run() {
             res.send(result)
         })
 
-
-
-
         // Delete Product
         app.delete('/product/:id', async (req, res) => {
             const id = req.params.id
@@ -215,21 +230,7 @@ async function run() {
             res.send(result)
         })
 
-        // Update Product
-        app.put('/product/:id', async(req, res) =>{
-            const id = req.params.id;
-            const updateProduct = req.body;
-            const filter = {_id: ObjectId(id)};
-            const options = { upsert: true };
-            const updatedDoc = {
-                $set: {
-                    quantity: updateProduct.quantity
-                }
-            };
-            const result = await productCollection.updateOne(filter, updatedDoc, options);
-            res.send(result);
-
-        })
+       
 
         // PAYMENT GATEWAY INTEGRATION
         app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
@@ -261,6 +262,12 @@ run().catch(console.dir)
 app.get('/', (req, res) => {
     res.send('Hello From Kelong Group!')
 })
+
+app.get('/hero', (req, res) => {
+    res.send('Hero From Kelong Group!')
+})
+
+
 
 app.listen(port, () => {
     console.log(`Kelong app listening on port ${port}`)
