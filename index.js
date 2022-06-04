@@ -109,17 +109,16 @@ async function run() {
         })
 
 
-         // Update Product
-         app.put('/product/:id', async(req, res) =>{
+        // Update Product
+        app.put('/product/:id', async (req, res) => {
             const id = req.params.id;
             const updateProduct = req.body;
             console.log(updateProduct);
-            const filter = {_id: ObjectId(id)};
+            const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
-                $set: 
-                    updateProduct,                  
-                
+                $set:
+                    updateProduct,
             };
             const result = await productCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
@@ -137,6 +136,7 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc, options)
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15d' })
+            console.log(token, process.env.ACCESS_TOKEN_SECRET);
             res.send({ result, token })
         })
 
@@ -147,6 +147,7 @@ async function run() {
             // const users = await userCollection.find().toArray()
             res.send(user)
         })
+
 
 
         // MAKE AN ADMIN
@@ -176,6 +177,16 @@ async function run() {
             res.send({ customer: isCustomer })
         })
 
+        // Delete user
+        app.delete('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.deleteOne({ email: email })
+            // const users = await userCollection.find().toArray()
+            res.send(user)
+        })
+
+
+
         // GET ALL USER
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray()
@@ -190,22 +201,25 @@ async function run() {
             res.send(result)
         })
 
-        // GET ALL ORDER
-        app.get('/manageorder', verifyJWT, async (req, res) => {
+        // Get email Order
+        app.get('/manageorders', async (req, res) => {
             const email = req.query.email
-            const authorization = req.headers.authorization
-            const decodedEmail = req.decoded.email
-            if (email === decodedEmail) {
-                const query = { email: email }
-                const orders = await manageorderCollection.find(query).toArray()
-                return res.send(orders)
-            }
-            else {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
+            const query = { email: email }
+            const cursor = manageorderCollection.find(query)
+            const orders = await cursor.toArray()
+            res.send(orders)
         })
 
-        // GET SPECIFIC ID ORDER
+
+        // Get All Order
+        app.get('/manageorder', async (req, res) => {
+            const cursor = manageorderCollection.find()
+            const orders = await cursor.toArray()
+            res.send(orders)
+        })
+    
+
+        // // GET SPECIFIC ID ORDER
         app.get('/manageorder/:id', verifyJWT, async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
@@ -230,20 +244,20 @@ async function run() {
             res.send(result)
         })
 
-       
+
 
         // PAYMENT GATEWAY INTEGRATION
-        app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const service = req.body;
             const price = service.price;
-            const amount = price*100;
+            const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
-              amount : amount,
-              currency: 'usd',
-              payment_method_types:['card']
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
             });
-            res.send({clientSecret: paymentIntent.client_secret})
-          });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
 
 
